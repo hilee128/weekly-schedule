@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>6월 7일~13일 주간 일정</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      background: #f9f8f6;
+      padding: 32px 24px 48px;
+      min-width: 900px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1a1a1a;
+      margin-bottom: 14px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .tab-btn {
+      padding: 8px 22px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: #e5e3df;
+      color: #666;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: #1a1a1a;
+      color: #fff;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 28px;
+      font-size: 0.82rem;
+      color: #444;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+    }
+
+    .day-col {
+      background: #fff;
+      border-radius: 16px;
+      padding: 14px 10px;
+      min-height: 400px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+
+    .day-header {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .day-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    .day-date {
+      font-size: 0.78rem;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    /* Task cards */
+    .task {
+      border-radius: 10px;
+      padding: 9px 10px;
+      margin-bottom: 8px;
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+    .task-title {
+      font-weight: 700;
+      font-size: 0.82rem;
+      margin-bottom: 3px;
+    }
+    .task-sub {
+      color: #555;
+      font-size: 0.75rem;
+    }
+
+    /* Colors */
+    .c-cheers    { background: #fde8e4; }
+    .c-cheers .task-title  { color: #c0392b; }
+    .c-beanpole  { background: #ede8fb; }
+    .c-beanpole .task-title { color: #6c3bb8; }
+    .c-heni      { background: #e4f5ec; }
+    .c-heni .task-title   { color: #1d7a47; }
+    .c-routine   { background: #f0f0f0; }
+    .c-routine .task-title { color: #555; }
+    .c-blog      { background: #e4eeff; }
+    .c-blog .task-title   { color: #2258cc; }
+    .c-present   { background: #fef4d6; }
+    .c-present .task-title { color: #8a6300; }
+    .c-me        { background: #fde4ef; }
+    .c-me .task-title     { color: #b0195e; }
+
+    .c-cheers   .task-title::before { content: "🎯 "; }
+    .c-beanpole .task-title::before { content: "✨ "; }
+    .c-heni     .task-title::before { content: "🎬 "; }
+    .c-routine  .task-title::before { content: "📝 "; }
+    .c-blog     .task-title::before { content: "💬 "; }
+    .c-present  .task-title::before { content: "🎤 "; }
+    .c-me       .task-title::before { content: "💡 "; }
+
+    /* ── Checklist Tab ── */
+    .checklist-wrap {
+      max-width: 680px;
+    }
+
+    .day-selector {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+    .day-pill {
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 2px solid #e0deda;
+      background: #fff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #777;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .day-pill.selected {
+      border-color: #1a1a1a;
+      background: #1a1a1a;
+      color: #fff;
+    }
+
+    .checklist-section {
+      display: none;
+    }
+    .checklist-section.visible {
+      display: block;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #efefef;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      background: #fff;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .check-item.done {
+      opacity: 0.45;
+    }
+    .check-item.done .ci-title {
+      text-decoration: line-through;
+      color: #aaa;
+    }
+
+    .ci-box {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      border: 2px solid #ccc;
+      flex-shrink: 0;
+      margin-top: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      transition: all 0.15s;
+    }
+    .check-item.done .ci-box {
+      background: #4caf82;
+      border-color: #4caf82;
+      color: #fff;
+    }
+
+    .ci-text { flex: 1; }
+    .ci-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 2px;
+    }
+    .ci-sub {
+      font-size: 0.75rem;
+      color: #888;
+    }
+
+    .ci-tag {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      flex-shrink: 0;
+      align-self: flex-start;
+      margin-top: 2px;
+    }
+
+    .tag-cheers  { background: #fde8e4; color: #c0392b; }
+    .tag-beanpole{ background: #ede8fb; color: #6c3bb8; }
+    .tag-heni    { background: #e4f5ec; color: #1d7a47; }
+    .tag-routine { background: #f0f0f0; color: #555; }
+    .tag-blog    { background: #e4eeff; color: #2258cc; }
+    .tag-present { background: #fef4d6; color: #8a6300; }
+    .tag-me      { background: #fde4ef; color: #b0195e; }
+
+    .progress-bar-wrap {
+      background: #efefef;
+      border-radius: 999px;
+      height: 8px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #4caf82, #2ecc71);
+      transition: width 0.3s ease;
+    }
+    .progress-label {
+      font-size: 0.8rem;
+      color: #777;
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>6월 7일~13일 주간 일정</h1>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('schedule')">📅 주간 일정</button>
+  <button class="tab-btn" onclick="switchTab('checklist')">✅ 오늘의 체크리스트</button>
+</div>
+
+<!-- ─────────── TAB 1: 주간 일정 ─────────── -->
+<div id="tab-schedule" class="tab-panel active">
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#e57373"></div> 취어스 광고</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#9575cd"></div> AI 활용 광고</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#4caf82"></div> 혜니 영상</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#aaa"></div> 매일 루틴</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#5b8dee"></div> 블로그/스레드</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f5c518"></div> 발표 연습</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e91e8c"></div> 나를 광고하기</div>
+  </div>
+
+  <div class="grid">
+
+    <!-- 일 6/7 -->
+    <div class="day-col">
+      <div class="day-header"><div class="day-name">일</div><div class="day-date">6/7</div></div>
+      <div class="task c-cheers"><div class="task-title">취어스 광고</div><div class="task-sub">기획 + 콘셉트 잡기 (AI 활용)</div></div>
+      <div class="task c-cheers"><div class="task-title">무진장 마무리</div><div class="task-sub">AI로 완성 → 제출/SNS용 정리</div></div>
+      <div class="task c-routine"><div class="task-title">영어 3문장</div></div>
+    </div>
+
+    <!-- 월 6/8 -->
+    <div class="day-col">
+      <div class="day-header"><div class="day-name">월</div><div class="day-date">6/8</div></div>
+      <div class="task c-cheers"><div class="task-title">취어스 광고</div><div class="task-sub">촬영 / 제작</div></div>
+      <div class="task c-beanpole"><div class="task-title">빈폴 광고</div><div class="task-sub">기획 + 콘셉트 (AI)</div></div>
+      <div class="task c-present"><div class="task-title">취어스 발표 연습 ①</div><div class="task-sub">대본 → 키워드 정리</div></div>
+      <div class="task c-routine"><div class="task-title">영어 3문장</div></div>
+    </div>
+
+    <!-- 화 6/9 -->
+    <div class="day-col">
+      <div class="day-header"><div class="day-name">화</div><div class="day-date">6/9</div></div>
+      <div class="task c-cheers"><div class="task-title">취어스 광고</div><div class="task-sub">편집 + 완성</div></div>
+      <div class="task c-beanpole"><div class="task-title">빈폴 광고</div><div class="task-sub">촬영 / 제작</div></div>
+      <div class="task c-present"><div class="task-title">취어스 발표 연습 ②</div><div class="task-sub">키워드로 말하기 연습</div></div>
+      <div class="task c-routine"><div class="task-title">영어 3문장</div></div>
+      <div class="task c-blog"><div class="task-title">블로그/스레드</div></div>
+    </div>
+
+    <!-- 수 6/10 -->
+    <div class="day-col">
+      <div class="day-header"><div class="day-name">수</div><div class="day-date">6/10</div></div>
+      <div class="task c-beanpole"><div class="task-title">빈폴 광고</div><div class="task-sub">편집 + 완성</div></div>
+      <div class="task c-heni"><div class="task-title">혜니 영상 ①②</div><div class="task-sub">알뜰폰 + 알리케이스</div></div>
+      <div class="task c-present"><div class="task-title">취어스 발표 연습 ③</div><div class="task-sub">노트 없이 리허설</div></div>
+      <div class="task c-routine"><div class="task-title">영어 3문장</div></div>
+    </div>
+
+    <!-- 목 6/11 -->
+    <div class="day-col">
+      <div class="day-header"><div class="day-name">목</div><div class="day-date">6/11</div></div>
+      <div class="task c-heni"><div class="task-title">혜니 영상 ③</div><div class="task-sub">목동 옷 시장</div></div>
+      <div class="task c-present"><div class="task-title">취어스 최종 리허설</div><div class="task-sub">실전처럼 풀 발표</div></div>
+      <div class="task c-routine"><div class="task-title">영어 3문장</div></div>
+      <div class="task c-blog"><div class="task-title">블로그/스레드</div></div>
+    </div>
+
+    <!-- 금 6/12 -->
+    <div class="day-col">
+      <div class="day-header"><div class="day-name">금</div><div class="day-date">6/12</div></div>
+      <div class="task c-me"><div class="task-title">나를 광고하기</div><div class="task-sub">기획 + 시작</div></div>
+      <div class="task c-routine"><div class="task-title">영어 3문장</div></div>
+      <div class="task c-blog"><div class="task-title">블로그/스레드</div></div>
+    </div>
+
+    <!-- 토 6/13 -->
+    <div class="day-col">
+      <div class="day-header"><div class="day-name">토</div><div class="day-date">6/13</div></div>
+      <div class="task c-me"><div class="task-title">나를 광고하기</div><div class="task-sub">완성 + 마무리</div></div>
+      <div class="task c-routine"><div class="task-title">영어 3문장</div></div>
+      <div class="task c-blog"><div class="task-title">블로그/스레드</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ─────────── TAB 2: 체크리스트 ─────────── -->
+<div id="tab-checklist" class="tab-panel">
+  <div class="checklist-wrap">
+
+    <div class="day-selector">
+      <button class="day-pill selected" onclick="selectDay('sun')">일 6/7</button>
+      <button class="day-pill" onclick="selectDay('mon')">월 6/8</button>
+      <button class="day-pill" onclick="selectDay('tue')">화 6/9</button>
+      <button class="day-pill" onclick="selectDay('wed')">수 6/10</button>
+      <button class="day-pill" onclick="selectDay('thu')">목 6/11</button>
+      <button class="day-pill" onclick="selectDay('fri')">금 6/12</button>
+      <button class="day-pill" onclick="selectDay('sat')">토 6/13</button>
+    </div>
+
+    <!-- 일 6/7 -->
+    <div id="cl-sun" class="checklist-section visible">
+      <p class="progress-label" id="prog-sun">0 / 3 완료</p>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="bar-sun" style="width:0%"></div></div>
+      <div class="section-title">일요일 6/7 할 일</div>
+      <div class="check-item" onclick="toggle(this,'sun')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">취어스 광고 — 기획 + 콘셉트 잡기</div><div class="ci-sub">AI 활용해서 방향 잡기</div></div>
+        <span class="ci-tag tag-cheers">취어스</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'sun')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">무진장 마무리</div><div class="ci-sub">AI로 완성 → 제출 / SNS용 정리</div></div>
+        <span class="ci-tag tag-cheers">취어스</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'sun')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">영어 3문장</div><div class="ci-sub">매일 루틴</div></div>
+        <span class="ci-tag tag-routine">루틴</span>
+      </div>
+    </div>
+
+    <!-- 월 6/8 -->
+    <div id="cl-mon" class="checklist-section">
+      <p class="progress-label" id="prog-mon">0 / 4 완료</p>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="bar-mon" style="width:0%"></div></div>
+      <div class="section-title">월요일 6/8 할 일</div>
+      <div class="check-item" onclick="toggle(this,'mon')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">취어스 광고 — 촬영 / 제작</div><div class="ci-sub"></div></div>
+        <span class="ci-tag tag-cheers">취어스</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'mon')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">빈폴 광고 — 기획 + 콘셉트</div><div class="ci-sub">AI 활용</div></div>
+        <span class="ci-tag tag-beanpole">빈폴</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'mon')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">취어스 발표 연습 ①</div><div class="ci-sub">대본 → 키워드 정리</div></div>
+        <span class="ci-tag tag-present">발표</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'mon')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">영어 3문장</div><div class="ci-sub">매일 루틴</div></div>
+        <span class="ci-tag tag-routine">루틴</span>
+      </div>
+    </div>
+
+    <!-- 화 6/9 -->
+    <div id="cl-tue" class="checklist-section">
+      <p class="progress-label" id="prog-tue">0 / 5 완료</p>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="bar-tue" style="width:0%"></div></div>
+      <div class="section-title">화요일 6/9 할 일</div>
+      <div class="check-item" onclick="toggle(this,'tue')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">취어스 광고 — 편집 + 완성</div><div class="ci-sub"></div></div>
+        <span class="ci-tag tag-cheers">취어스</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'tue')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">빈폴 광고 — 촬영 / 제작</div><div class="ci-sub"></div></div>
+        <span class="ci-tag tag-beanpole">빈폴</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'tue')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">취어스 발표 연습 ②</div><div class="ci-sub">키워드로 말하기 연습</div></div>
+        <span class="ci-tag tag-present">발표</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'tue')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">영어 3문장</div><div class="ci-sub">매일 루틴</div></div>
+        <span class="ci-tag tag-routine">루틴</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'tue')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">블로그/스레드</div><div class="ci-sub"></div></div>
+        <span class="ci-tag tag-blog">블로그</span>
+      </div>
+    </div>
+
+    <!-- 수 6/10 -->
+    <div id="cl-wed" class="checklist-section">
+      <p class="progress-label" id="prog-wed">0 / 4 완료</p>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="bar-wed" style="width:0%"></div></div>
+      <div class="section-title">수요일 6/10 할 일</div>
+      <div class="check-item" onclick="toggle(this,'wed')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">빈폴 광고 — 편집 + 완성</div><div class="ci-sub"></div></div>
+        <span class="ci-tag tag-beanpole">빈폴</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'wed')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">혜니 영상 ①② — 알뜰폰 + 알리케이스</div><div class="ci-sub"></div></div>
+        <span class="ci-tag tag-heni">혜니</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'wed')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">취어스 발표 연습 ③</div><div class="ci-sub">노트 없이 리허설</div></div>
+        <span class="ci-tag tag-present">발표</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'wed')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">영어 3문장</div><div class="ci-sub">매일 루틴</div></div>
+        <span class="ci-tag tag-routine">루틴</span>
+      </div>
+    </div>
+
+    <!-- 목 6/11 -->
+    <div id="cl-thu" class="checklist-section">
+      <p class="progress-label" id="prog-thu">0 / 4 완료</p>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="bar-thu" style="width:0%"></div></div>
+      <div class="section-title">목요일 6/11 할 일</div>
+      <div class="check-item" onclick="toggle(this,'thu')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">혜니 영상 ③ — 목동 옷 시장</div><div class="ci-sub"></div></div>
+        <span class="ci-tag tag-heni">혜니</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'thu')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">취어스 최종 리허설</div><div class="ci-sub">실전처럼 풀 발표</div></div>
+        <span class="ci-tag tag-present">발표</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'thu')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">영어 3문장</div><div class="ci-sub">매일 루틴</div></div>
+        <span class="ci-tag tag-routine">루틴</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'thu')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">블로그/스레드</div><div class="ci-sub"></div></div>
+        <span class="ci-tag tag-blog">블로그</span>
+      </div>
+    </div>
+
+    <!-- 금 6/12 -->
+    <div id="cl-fri" class="checklist-section">
+      <p class="progress-label" id="prog-fri">0 / 3 완료</p>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="bar-fri" style="width:0%"></div></div>
+      <div class="section-title">금요일 6/12 할 일</div>
+      <div class="check-item" onclick="toggle(this,'fri')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">나를 광고하기 — 기획 + 시작</div><div class="ci-sub"></div></div>
+        <span class="ci-tag tag-me">나를</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'fri')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">영어 3문장</div><div class="ci-sub">매일 루틴</div></div>
+        <span class="ci-tag tag-routine">루틴</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'fri')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">블로그/스레드</div><div class="ci-sub"></div></div>
+        <span class="ci-tag tag-blog">블로그</span>
+      </div>
+    </div>
+
+    <!-- 토 6/13 -->
+    <div id="cl-sat" class="checklist-section">
+      <p class="progress-label" id="prog-sat">0 / 3 완료</p>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="bar-sat" style="width:0%"></div></div>
+      <div class="section-title">토요일 6/13 할 일</div>
+      <div class="check-item" onclick="toggle(this,'sat')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">나를 광고하기 — 완성 + 마무리</div><div class="ci-sub"></div></div>
+        <span class="ci-tag tag-me">나를</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'sat')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">영어 3문장</div><div class="ci-sub">매일 루틴</div></div>
+        <span class="ci-tag tag-routine">루틴</span>
+      </div>
+      <div class="check-item" onclick="toggle(this,'sat')">
+        <div class="ci-box"></div>
+        <div class="ci-text"><div class="ci-title">블로그/스레드</div><div class="ci-sub"></div></div>
+        <span class="ci-tag tag-blog">블로그</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const dayKeys = ['sun','mon','tue','wed','thu','fri','sat'];
+  const totalMap = { sun:3, mon:4, tue:5, wed:4, thu:4, fri:3, sat:3 };
+  const doneMap  = { sun:0, mon:0, tue:0, wed:0, thu:0, fri:0, sat:0 };
+
+  function switchTab(id) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function selectDay(key) {
+    document.querySelectorAll('.checklist-section').forEach(s => s.classList.remove('visible'));
+    document.querySelectorAll('.day-pill').forEach(p => p.classList.remove('selected'));
+    document.getElementById('cl-' + key).classList.add('visible');
+    event.target.classList.add('selected');
+  }
+
+  function toggle(el, dayKey) {
+    const isDone = el.classList.toggle('done');
+    el.querySelector('.ci-box').textContent = isDone ? '✓' : '';
+    doneMap[dayKey] += isDone ? 1 : -1;
+    const total = totalMap[dayKey];
+    const done  = doneMap[dayKey];
+    document.getElementById('prog-' + dayKey).textContent = done + ' / ' + total + ' 완료';
+    document.getElementById('bar-' + dayKey).style.width = Math.round(done / total * 100) + '%';
+  }
+
+  // Auto-select today
+  const today = new Date();
+  const dayOfWeek = today.getDay(); // 0=sun
+  const keyOrder = ['sun','mon','tue','wed','thu','fri','sat'];
+  const todayKey = keyOrder[dayOfWeek];
+  const pills = document.querySelectorAll('.day-pill');
+  const idx = keyOrder.indexOf(todayKey);
+  if (idx >= 0) {
+    pills.forEach(p => p.classList.remove('selected'));
+    pills[idx].classList.add('selected');
+    document.querySelectorAll('.checklist-section').forEach(s => s.classList.remove('visible'));
+    document.getElementById('cl-' + todayKey).classList.add('visible');
+  }
+</script>
+</body>
+</html>
