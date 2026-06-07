@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>달콤기후 공모전 2시간 타임라인</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{
+      font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+      background:#f5f4f0;
+      min-height:100vh;
+      padding:32px 20px 60px;
+    }
+
+    .header{max-width:720px;margin:0 auto 28px;}
+    .header h1{font-size:1.5rem;font-weight:800;color:#1a1a1a;margin-bottom:6px;}
+    .header p{font-size:0.85rem;color:#888;}
+
+    /* 상단 상태바 */
+    .status-bar{
+      max-width:720px;margin:0 auto 24px;
+      background:#1a1a1a;border-radius:16px;
+      padding:18px 24px;
+      display:flex;align-items:center;justify-content:space-between;
+      flex-wrap:wrap;gap:12px;
+    }
+    .status-bar .now{color:#fff;font-size:0.82rem;opacity:0.6;}
+    .status-bar .clock{color:#fff;font-size:1.6rem;font-weight:800;letter-spacing:2px;}
+    .status-bar .end{color:#fff;font-size:0.82rem;opacity:0.6;}
+    .status-bar .remaining{
+      background:#fff;color:#1a1a1a;
+      font-size:0.9rem;font-weight:700;
+      padding:6px 16px;border-radius:999px;
+    }
+    .remaining.done{background:#4caf82;color:#fff;}
+    .remaining.urgent{background:#e74c3c;color:#fff;}
+
+    /* 전체 진행바 */
+    .total-progress{max-width:720px;margin:0 auto 28px;}
+    .tp-label{display:flex;justify-content:space-between;font-size:0.8rem;color:#888;margin-bottom:6px;}
+    .tp-bar{background:#e0ded9;border-radius:999px;height:8px;overflow:hidden;}
+    .tp-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#4caf82,#2ecc71);transition:width .4s;}
+
+    /* 블록 */
+    .block{
+      max-width:720px;margin:0 auto 12px;
+      background:#fff;border-radius:16px;
+      overflow:hidden;
+      box-shadow:0 1px 4px rgba(0,0,0,.06);
+    }
+    .block-header{
+      display:flex;align-items:center;gap:14px;
+      padding:14px 20px;cursor:pointer;
+      transition:background .15s;
+    }
+    .block-header:hover{background:#fafafa;}
+    .block-header.active-block{background:#f0faf5;}
+
+    .time-badge{
+      font-size:0.75rem;font-weight:700;
+      padding:4px 10px;border-radius:999px;
+      white-space:nowrap;flex-shrink:0;
+    }
+    .block-title{flex:1;font-size:0.95rem;font-weight:700;color:#1a1a1a;}
+    .block-count{font-size:0.8rem;color:#aaa;flex-shrink:0;}
+    .chevron{font-size:0.7rem;color:#bbb;flex-shrink:0;transition:transform .2s;}
+    .block.open .chevron{transform:rotate(180deg);}
+
+    .block-body{display:none;padding:0 20px 16px;}
+    .block.open .block-body{display:block;}
+
+    /* 체크 아이템 */
+    .item{
+      display:flex;align-items:flex-start;gap:12px;
+      padding:10px 12px;border-radius:10px;
+      margin-bottom:6px;cursor:pointer;
+      transition:background .15s;
+    }
+    .item:hover{background:#f7f6f3;}
+    .item.done{opacity:.45;}
+    .item.done .item-title{text-decoration:line-through;color:#aaa;}
+
+    .cb{
+      width:20px;height:20px;border-radius:6px;border:2px solid #ddd;
+      flex-shrink:0;margin-top:1px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:12px;transition:all .15s;
+    }
+    .item.done .cb{background:#4caf82;border-color:#4caf82;color:#fff;}
+
+    .item-title{font-size:0.86rem;font-weight:600;color:#1a1a1a;}
+    .item-sub{font-size:0.75rem;color:#999;margin-top:2px;}
+
+    /* 프롬프트 박스 */
+    .prompt-box{
+      background:#f5f4f0;border-radius:10px;
+      padding:12px 14px;margin:8px 0;
+      position:relative;
+    }
+    .prompt-box pre{
+      font-family:'Menlo','Courier New',monospace;
+      font-size:0.75rem;color:#333;
+      white-space:pre-wrap;word-break:break-all;
+      line-height:1.6;
+    }
+    .copy-btn{
+      position:absolute;top:8px;right:8px;
+      background:#1a1a1a;color:#fff;border:none;
+      font-size:0.7rem;padding:4px 10px;border-radius:6px;
+      cursor:pointer;transition:opacity .15s;
+    }
+    .copy-btn:hover{opacity:.75;}
+    .copy-btn.copied{background:#4caf82;}
+
+    .prompt-label{
+      font-size:0.72rem;font-weight:700;color:#888;
+      text-transform:uppercase;letter-spacing:.5px;
+      margin-bottom:6px;
+    }
+
+    /* 색상 세트 */
+    .col-grok   .time-badge{background:#fde8e4;color:#c0392b;}
+    .col-magnific .time-badge{background:#ede8fb;color:#6c3bb8;}
+    .col-kling  .time-badge{background:#e4f5ec;color:#1d7a47;}
+    .col-bgm    .time-badge{background:#e4eeff;color:#2258cc;}
+    .col-capcut .time-badge{background:#fff0e0;color:#b35c00;}
+    .col-final  .time-badge{background:#fde4ef;color:#b0195e;}
+
+    .col-grok.block-header.active-block{background:#fef6f5;}
+    .col-magnific.block-header.active-block{background:#f5f2ff;}
+    .col-kling.block-header.active-block{background:#f0faf5;}
+    .col-capcut.block-header.active-block{background:#fff8f0;}
+    .col-final.block-header.active-block{background:#fff0f6;}
+
+    /* 현재 블록 강조 */
+    .current-indicator{
+      font-size:0.68rem;font-weight:700;
+      background:#ff6b35;color:#fff;
+      padding:2px 8px;border-radius:999px;
+      margin-left:4px;
+    }
+
+    .section-divider{
+      max-width:720px;margin:20px auto 12px;
+      font-size:0.75rem;font-weight:700;color:#bbb;
+      text-transform:uppercase;letter-spacing:1px;
+    }
+
+    .tip{
+      max-width:720px;margin:0 auto 12px;
+      background:#fffbe6;border-left:4px solid #f5c518;
+      border-radius:0 10px 10px 0;
+      padding:12px 16px;font-size:0.82rem;color:#555;
+      line-height:1.6;
+    }
+    .tip strong{color:#1a1a1a;}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🌿 달콤기후 공모전 — 2시간 타임라인</h1>
+  <p>오전 8:00 시작 · 오전 10:00 마감 · 제출 기한 6월 12일</p>
+</div>
+
+<!-- 상태바 -->
+<div class="status-bar">
+  <div>
+    <div class="now">현재 시간</div>
+    <div class="clock" id="clock">--:--</div>
+  </div>
+  <div style="text-align:right">
+    <div class="end">마감까지</div>
+    <div class="remaining" id="remaining">-- 남음</div>
+  </div>
+</div>
+
+<!-- 전체 진행 -->
+<div class="total-progress">
+  <div class="tp-label">
+    <span id="prog-text">0 / 24 완료</span>
+    <span id="prog-pct">0%</span>
+  </div>
+  <div class="tp-bar"><div class="tp-fill" id="tp-fill" style="width:0%"></div></div>
+</div>
+
+<div class="tip">
+  <strong>지금 바로 시작!</strong> 블록을 클릭하면 펼쳐져요. 체크하면 자동으로 진행률이 올라가요. 프롬프트는 복사 버튼으로 바로 가져가세요.
+</div>
+
+<!-- ────── 블록 1: Grok ────── -->
+<div class="block open" id="block-grok">
+  <div class="block-header col-grok active-block" onclick="toggleBlock('grok')">
+    <span class="time-badge">08:00~08:20</span>
+    <span class="block-title">① Grok 이미지 생성 <span class="current-indicator" id="ind-grok">지금</span></span>
+    <span class="block-count" id="cnt-grok">0/9</span>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="block-body">
+    <p style="font-size:0.78rem;color:#aaa;margin-bottom:12px;">생성되는 동안 다음 프롬프트 바로 입력 — 병렬로 진행하면 시간 절약</p>
+
+    <div class="item" onclick="check(this,'grok')">
+      <div class="cb"></div>
+      <div>
+        <div class="item-title">씬1 — 뉴스 날씨 예보 화면</div>
+        <div class="prompt-label">Grok 프롬프트</div>
+        <div class="prompt-box">
+          <pre>Korean news weather forecast broadcast screen, digital map of Korea covered in red heat zones, temperature showing 38°C, dark dramatic lighting, cinematic, 4K, realistic</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">복사</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" onclick="check(this,'grok')">
+      <div class="cb"></div>
+      <div>
+        <div class="item-title">씬2A — 폭염 서울 도심</div>
+        <div class="prompt-label">Grok 프롬프트</div>
+        <div class="prompt-box">
+          <pre>Seoul cityscape 2050, extreme heatwave, cracked dry ground, yellow smoggy sky, empty streets, dystopian, photorealistic</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">복사</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" onclick="check(this,'grok')">
+      <div class="cb"></div>
+      <div>
+        <div class="item-title">씬2B — 침수된 해안 도시</div>
+        <div class="prompt-label">Grok 프롬프트</div>
+        <div class="prompt-box">
+          <pre>Coastal Korean city flooding, rising sea levels, submerged buildings, dark storm clouds, cinematic wide shot, photorealistic</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">복사</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" onclick="check(this,'grok')">
+      <div class="cb"></div>
+      <div>
+        <div class="item-title">씬2C — 황사 뒤덮인 서울</div>
+        <div class="prompt-label">Grok 프롬프트</div>
+        <div class="prompt-box">
+          <pre>Seoul covered in thick yellow dust storm, people wearing gas masks, apocalyptic atmosphere, dramatic lighting, photorealistic</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">복사</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" onclick="check(this,'grok')">
+      <div class="cb"></div>
+      <div>
+        <div class="item-title">씬3 — 씨앗 싹트기</div>
+        <div class="prompt-label">Grok 프롬프트</div>
+        <div class="prompt-box">
+          <pre>Single green seedling sprouting from dry cracked earth, soft warm light breaking through dark clouds, hope concept, macro shot, cinematic</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">복사</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" onclick="check(this,'grok')">
+      <div class="cb"></div>
+      <div>
+        <div class="item-title">씬4A — 초록 서울 2050</div>
+        <div class="prompt-label">Grok 프롬프트</div>
+        <div class="prompt-box">
+          <pre>Seoul 2050 green utopia, solar panels on every rooftop, trees lining streets, clear blue sky, people cycling, vibrant and hopeful, photorealistic</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">복사</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" onclick="check(this,'grok')">
+      <div class="cb"></div>
+      <div>
+        <div class="item-title">씬4B — 깨끗한 바다</div>
+        <div class="prompt-label">Grok 프롬프트</div>
+        <div class="prompt-box">
+          <pre>Clean Korean coastline 2050, crystal clear ocean, restored coral reefs visible underwater, bright sunlight, optimistic, photorealistic</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">복사</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" onclick="check(this,'grok')">
+      <div class="cb"></div>
+      <div>
+        <div class="item-title">씬4C — 공원 아이들</div>
+        <div class="prompt-label">Grok 프롬프트</div>
+        <div class="prompt-box">
+          <pre>Children playing in lush green park, fresh air, wildflowers, bright warm sunshine, joyful and cinematic, golden hour, photorealistic</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">복사</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="item" onclick="check(this,'grok')">
+      <div class="cb"></div>
+      <div>
+        <div class="item-title">씬5 — 텀블러 든 사람</div>
+        <div class="prompt-label">Grok 프롬프트</div>
+        <div class="prompt-box">
+          <pre>Person using reusable tumbler, warm aesthetic, soft natural lighting, lifestyle photography style, korean daily life, photorealistic</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">복사</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ────── 블록 2: Magnific ────── -->
+<div class="block" id="block-magnific">
+  <div class="block-header col-magnific" onclick="toggleBlock('magnific')">
+    <span class="time-badge">08:20~08:35</span>
+    <span class="block-title">② Magnific 보정 <span class="current-indicator" id="ind-magnific" style="display:none">지금</span></span>
+    <span class="block-count" id="cnt-magnific">0/3</span>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="block-body">
+    <p style="font-size:0.78rem;color:#aaa;margin-bottom:12px;">중요한 3장만 — 전부 다 하면 시간 초과</p>
+    <div class="item" onclick="check(this,'magnific')"><div class="cb"></div><div><div class="item-title">씬4A 초록 서울 업스케일</div><div class="item-sub">메인 장면 — 퀄리티 최우선</div></div></div>
+    <div class="item" onclick="check(this,'magnific')"><div class="cb"></div><div><div class="item-title">씬2A 폭염 서울 업스케일</div><div class="item-sub">대비 장면이라 선명할수록 좋음</div></div></div>
+    <div class="item" onclick="check(this,'magnific')"><div class="cb"></div><div><div class="item-title">씬4C 공원 아이들 업스케일</div><div class="item-sub">감성 클로징 장면</div></div></div>
+  </div>
+</div>
+
+<!-- ────── 블록 3: Kling ────── -->
+<div class="block" id="block-kling">
+  <div class="block-header col-kling" onclick="toggleBlock('kling')">
+    <span class="time-badge">08:35~08:55</span>
+    <span class="block-title">③ Kling 영상 변환 <span class="current-indicator" id="ind-kling" style="display:none">지금</span></span>
+    <span class="block-count" id="cnt-kling">0/4</span>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="block-body">
+    <p style="font-size:0.78rem;color:#aaa;margin-bottom:12px;">각 3~4초 / 모션 강도 낮게 설정 — 너무 움직이면 어색함</p>
+    <div class="item" onclick="check(this,'kling')"><div class="cb"></div><div><div class="item-title">씬2A 폭염 서울 → 영상</div><div class="item-sub">아지랑이 효과 자연스럽게</div></div></div>
+    <div class="item" onclick="check(this,'kling')"><div class="cb"></div><div><div class="item-title">씬3 씨앗 싹트기 → 영상</div><div class="item-sub">슬로모션 느낌, 모션 최소</div></div></div>
+    <div class="item" onclick="check(this,'kling')"><div class="cb"></div><div><div class="item-title">씬4A 초록 서울 → 영상</div><div class="item-sub">카메라 천천히 줌아웃</div></div></div>
+    <div class="item" onclick="check(this,'kling')"><div class="cb"></div><div><div class="item-title">씬4C 공원 아이들 → 영상</div><div class="item-sub">부드럽게 흐르는 느낌</div></div></div>
+  </div>
+</div>
+
+<!-- ────── 블록 4: BGM ────── -->
+<div class="block" id="block-bgm">
+  <div class="block-header col-bgm" onclick="toggleBlock('bgm')">
+    <span class="time-badge">08:55~09:00</span>
+    <span class="block-title">④ BGM 다운로드 <span class="current-indicator" id="ind-bgm" style="display:none">지금</span></span>
+    <span class="block-count" id="cnt-bgm">0/2</span>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="block-body">
+    <div class="item" onclick="check(this,'bgm')"><div class="cb"></div><div><div class="item-title">Pixabay Music → "hopeful cinematic" 검색</div><div class="item-sub">pixabay.com/music — 저작권 무료</div></div></div>
+    <div class="item" onclick="check(this,'bgm')"><div class="cb"></div><div><div class="item-title">1곡 선택 후 MP3 다운</div><div class="item-sub">2분 이상 길이로 선택</div></div></div>
+  </div>
+</div>
+
+<!-- ────── 블록 5: CapCut ────── -->
+<div class="block" id="block-capcut">
+  <div class="block-header col-capcut" onclick="toggleBlock('capcut')">
+    <span class="time-badge">09:00~09:40</span>
+    <span class="block-title">⑤ CapCut 편집 <span class="current-indicator" id="ind-capcut" style="display:none">지금</span></span>
+    <span class="block-count" id="cnt-capcut">0/8</span>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="block-body">
+    <div class="item" onclick="check(this,'capcut')"><div class="cb"></div><div><div class="item-title">씬 순서대로 타임라인 배치</div><div class="item-sub">씬1→2A→2B→2C→3→4A→4B→4C→5</div></div></div>
+    <div class="item" onclick="check(this,'capcut')"><div class="cb"></div><div><div class="item-title">씬1 뉴스 자막 스타일 텍스트</div><div class="item-sub">「2050년 3월 15일 날씨 예보」</div></div></div>
+    <div class="item" onclick="check(this,'capcut')"><div class="cb"></div><div><div class="item-title">씬2 자막</div><div class="item-sub">「온실가스를 줄이지 않은 2050년」</div></div></div>
+    <div class="item" onclick="check(this,'capcut')"><div class="cb"></div><div><div class="item-title">씬3 페이드 블랙 전환 효과</div><div class="item-sub">여기서 BGM 분위기도 전환</div></div></div>
+    <div class="item" onclick="check(this,'capcut')"><div class="cb"></div><div><div class="item-title">씬4 자막</div><div class="item-sub">「우리가 선택한 2050년」</div></div></div>
+    <div class="item" onclick="check(this,'capcut')"><div class="cb"></div><div><div class="item-title">씬5 자막 4개 순서대로 페이드인</div><div class="item-sub">텀블러 하나 / 대중교통 한 번 / 플러그 하나 뽑기 / 달콤한 기후는 오늘의 선택에서 시작됩니다</div></div></div>
+    <div class="item" onclick="check(this,'capcut')"><div class="cb"></div><div><div class="item-title">마지막 #달콤기후 텍스트 + 기상청 로고</div></div></div>
+    <div class="item" onclick="check(this,'capcut')"><div class="cb"></div><div><div class="item-title">BGM 삽입 + 전체 길이 50초 이내 확인</div></div></div>
+  </div>
+</div>
+
+<!-- ────── 블록 6: 최종 ────── -->
+<div class="block" id="block-final">
+  <div class="block-header col-final" onclick="toggleBlock('final')">
+    <span class="time-badge">09:40~10:00</span>
+    <span class="block-title">⑥ 최종 검토 + 내보내기 <span class="current-indicator" id="ind-final" style="display:none">지금</span></span>
+    <span class="block-count" id="cnt-final">0/4</span>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="block-body">
+    <div class="item" onclick="check(this,'final')"><div class="cb"></div><div><div class="item-title">전체 1회 재생 — 어색한 컷 확인</div></div></div>
+    <div class="item" onclick="check(this,'final')"><div class="cb"></div><div><div class="item-title">자막 오탈자 체크</div></div></div>
+    <div class="item" onclick="check(this,'final')"><div class="cb"></div><div><div class="item-title">9:16 비율 + 1080p 이상 확인</div></div></div>
+    <div class="item" onclick="check(this,'final')"><div class="cb"></div><div><div class="item-title">내보내기 → 달콤기후_두개의2050_최종.mp4</div></div></div>
+  </div>
+</div>
+
+<script>
+  const totals = {grok:9, magnific:3, kling:4, bgm:2, capcut:8, final:4};
+  const done   = {grok:0, magnific:0, kling:0, bgm:0, capcut:0, final:0};
+  const totalAll = Object.values(totals).reduce((a,b)=>a+b,0);
+
+  // 블록 시간 범위 [시작분, 끝분] (기준: 08:00 = 0분)
+  const blockTimes = {
+    grok:[0,20], magnific:[20,35], kling:[35,55],
+    bgm:[55,60], capcut:[60,100], final:[100,120]
+  };
+
+  function toggleBlock(id){
+    const b = document.getElementById('block-'+id);
+    b.classList.toggle('open');
+  }
+
+  function check(el, blockId){
+    const wasDone = el.classList.toggle('done');
+    el.querySelector('.cb').textContent = wasDone ? '✓' : '';
+    done[blockId] += wasDone ? 1 : -1;
+    updateCount(blockId);
+    updateTotal();
+  }
+
+  function updateCount(id){
+    document.getElementById('cnt-'+id).textContent = done[id]+'/'+totals[id];
+  }
+
+  function updateTotal(){
+    const doneAll = Object.values(done).reduce((a,b)=>a+b,0);
+    const pct = Math.round(doneAll/totalAll*100);
+    document.getElementById('prog-text').textContent = doneAll+' / '+totalAll+' 완료';
+    document.getElementById('prog-pct').textContent = pct+'%';
+    document.getElementById('tp-fill').style.width = pct+'%';
+  }
+
+  function copyPrompt(btn){
+    const text = btn.previousElementSibling.textContent;
+    navigator.clipboard.writeText(text).then(()=>{
+      btn.textContent='복사됨';
+      btn.classList.add('copied');
+      setTimeout(()=>{btn.textContent='복사';btn.classList.remove('copied');},2000);
+    });
+  }
+
+  // 시계 + 남은 시간 + 현재 블록 강조
+  function tick(){
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('clock').textContent = h+':'+m+':'+s;
+
+    // 10:00까지 남은 시간
+    const end = new Date(now);
+    end.setHours(10,0,0,0);
+    const diff = end - now;
+    const rem = document.getElementById('remaining');
+    if(diff <= 0){
+      rem.textContent = '시간 종료';
+      rem.className = 'remaining done';
+    } else {
+      const rm = Math.floor(diff/60000);
+      const rs = Math.floor((diff%60000)/1000);
+      rem.textContent = rm+'분 '+rs+'초 남음';
+      rem.className = 'remaining' + (rm < 10 ? ' urgent' : '');
+    }
+
+    // 현재 블록
+    const elapsed = (now.getHours()-8)*60 + now.getMinutes();
+    Object.keys(blockTimes).forEach(id=>{
+      const [s,e] = blockTimes[id];
+      const ind = document.getElementById('ind-'+id);
+      const hdr = document.querySelector('#block-'+id+' .block-header');
+      if(elapsed >= s && elapsed < e){
+        ind.style.display='inline';
+        hdr.classList.add('active-block');
+      } else {
+        ind.style.display='none';
+        hdr.classList.remove('active-block');
+      }
+    });
+  }
+
+  setInterval(tick, 1000);
+  tick();
+</script>
+</body>
+</html>
